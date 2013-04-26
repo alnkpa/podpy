@@ -33,3 +33,10 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+.*
+!.gitignore
+*~
+
+# SublimeText project files
+*.sublime-workspace

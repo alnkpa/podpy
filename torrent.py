@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Copyright Daniel Wallin 2006. Use, modification and distribution is
+# subject to the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-import sys
 import os
 import time
 import libtorrent as lt
@@ -53,6 +52,9 @@ class TorrentDownloader(object):
 
 		self.handles.append(h)
 
+	def get_handles(self):
+		return self.handles
+
 	def main_loop(self):
 		for h in self.handles:
 			out = ''
@@ -68,7 +70,7 @@ class TorrentDownloader(object):
 	def stop(self):
 		self.ses.pause()
 		for h in self.handles:
-			if not h.is_valid() or not h.has_metadata() or (4 < h.status().state < 7):
+			if not h.is_valid() or not h.has_metadata():
 				continue
 			data = lt.bencode(h.write_resume_data())
 			open(os.path.join(self.save_path, h.get_torrent_info().name() + '.fastresume'), 'wb').write(data)
@@ -77,6 +79,7 @@ class TorrentDownloader(object):
 		self.save_path = path
 
 if __name__ == '__main__':
+	import sys
 	client = TorrentDownloader()
 	try:
 		client.addTorrent(sys.argv[1])

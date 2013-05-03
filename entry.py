@@ -11,5 +11,11 @@ class FeedEntry(object):
 		self.published = published
 		self.href = href
 		self.size = int(size)
-		self.downloading = False
+		self.done = False
 		self.downloaded = 0
+
+	def hook_for_urlretrieve(self, block_count, block_size, file_size, done=-1):
+		self.size = file_size
+		self.downloaded = block_count*block_size
+		if self.downloaded == self.size or done is True:
+			self.done = True

@@ -7,6 +7,9 @@ import curses
 import feed
 import locale
 import time
+import os
+import torrent
+import httpdownloader
 
 
 # credit to Fred Cirera
@@ -21,7 +24,9 @@ class PodPyCurses(object):
 	"""a curses controller for podpy"""
 	def __init__(self):
 		super(PodPyCurses, self).__init__()
+		self.torrent_downloader = torrent.TorrentDownloader()
 		self.feeds = []
+		self.downloaders = [self.torrent_downloader]
 		self.active_feed = 0
 		self.page = 0
 
@@ -50,6 +55,7 @@ class PodPyCurses(object):
 		self.pod_list = self.stdscr.derwin(height - 8, width - 2, 4, 1)
 
 		### TODO add timed pod_list update
+		now = time.time()
 		### control
 		while 1:
 			inp = stdscr.getch()
@@ -81,13 +87,31 @@ class PodPyCurses(object):
 				### go one page down
 				self.page += 1
 				self.update_pod_list()
-			elif '0' < char < '9':
+			elif '0' <= char <= '9':
 				### select an entry for download
 				integer = int(char)
-				index = self.page * self.pod_list.getmaxyx()[0] + integer
+				index = self.page * self.pod_list.getmaxyx()[0]/3 + integer
 				cur_feed = self.feeds[self.active_feed]
 				if index < len(cur_feed.encs):
 					self.download_enc(cur_feed, index)
+
+			### update pod_list once per second
+			if time.time() - now > 1:
+				self.update_pod_list()
+				now = time.time()
+
+	def download_enc(self, feed, index):
+		dir_name = feed.title.lower().replace(' ', '_')
+		if not os.path.isdir(dir_name):
+			os.mkdir(dir_name)
+		entry = feed.encs[index]
+		if entry.href.endswith(".torrent"):
+			self.torrent_downloader.addTorrent(dir_name, entry.href, entry)
+		else:
+			entry_name = entry.href.split("/")[-1]
+			path = dir_name + "/" + entry_name
+			self.downloaders.append(httpdownloader.HttpDownloader(entry.hook_for_urlretrieve, path))
+			self.downloaders[-1].download(entry.href)
 
 	def new_feed(self):
 		### ask for feed url
@@ -140,6 +164,8 @@ class PodPyCurses(object):
 		### paint pod_list completely new, it's easier
 		self.pod_list.clear()
 
+		self.torrent_downloader.update_info()
+
 		feed = self.feeds[self.active_feed]
 		encs = feed.encs
 		height, width = self.pod_list.getmaxyx()
@@ -150,7 +176,7 @@ class PodPyCurses(object):
 				break
 
 			### paint downloading items bold
-			attr = curses.A_BOLD if encs[index].downloading else 0
+			attr = curses.A_BOLD if encs[index].done else 0
 			### numbers
 			self.pod_list.addch(3*i, 1, str(i), curses.A_BOLD | curses.A_UNDERLINE)
 			### name

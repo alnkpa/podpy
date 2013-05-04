@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(name="podpy",
       version="0.1.1",
       description="""podpy is a simple small-footprint podcatcher planned to
-to be expanded to be a full-fledged podcast client""",
+ be expanded to be a full-fledged podcast client""",
       author="Patrick Schmidt",
       author_email="patrick@alnkpa.de",
       url="https://github.com/alnkpa/podpy",
       packages=["podpyclient"],
       requires=["libtorrent", "feedparser"],
+      provides=["pypodclient"],
       scripts=["podpy"],
       download_url="https://github.com/alnkpa/podpy/archive/master.zip",
       classifiers=["Development Status :: 2 - Pre-Alpha",

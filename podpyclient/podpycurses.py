@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -8,6 +6,8 @@ import feed
 import locale
 import time
 import os
+import argparse
+
 import torrent
 import httpdownloader
 
@@ -24,11 +24,25 @@ class PodPyCurses(object):
 	"""a curses controller for podpy"""
 	def __init__(self):
 		super(PodPyCurses, self).__init__()
+		self.parse_args()
+		if self.args.version:
+			print """podpy v0.1.1"""
+			return
 		self.torrent_downloader = torrent.TorrentDownloader()
 		self.feeds = []
 		self.downloaders = [self.torrent_downloader]
 		self.active_feed = 0
 		self.page = 0
+
+		curses.wrapper(self.start_curses)
+
+	def parse_args(self):
+		parser = argparse.ArgumentParser()
+
+		parser.add_argument("--version", help="output version information",
+									action="store_true")
+
+		self.args = parser.parse_args()
 
 	def start_curses(self, stdscr):
 		### start foo, no blinking cursor, string encoding
@@ -88,30 +102,41 @@ class PodPyCurses(object):
 				self.page += 1
 				self.update_pod_list()
 			elif '0' <= char <= '9':
-				### select an entry for download
+				### select an entry for download or TODO play it
 				integer = int(char)
 				index = self.page * self.pod_list.getmaxyx()[0]/3 + integer
 				cur_feed = self.feeds[self.active_feed]
 				if index < len(cur_feed.encs):
-					self.download_enc(cur_feed, index)
+					self.select_enc(cur_feed, index)
 
 			### update pod_list once per second
 			if time.time() - now > 1:
 				self.update_pod_list()
 				now = time.time()
 
-	def download_enc(self, feed, index):
+	def select_enc(self, feed, index):
 		dir_name = feed.title.lower().replace(' ', '_')
 		if not os.path.isdir(dir_name):
 			os.mkdir(dir_name)
 		entry = feed.encs[index]
-		if entry.href.endswith(".torrent"):
-			self.torrent_downloader.addTorrent(dir_name, entry.href, entry)
+		if entry.done:
+			self.play_sound(entry)
 		else:
-			entry_name = entry.href.split("/")[-1]
-			path = dir_name + "/" + entry_name
-			self.downloaders.append(httpdownloader.HttpDownloader(entry.hook_for_urlretrieve, path))
-			self.downloaders[-1].download(entry.href)
+			entry.dir = dir_name
+			if entry.href.endswith(".torrent"):
+				self.torrent_downloader.addTorrent(dir_name, entry.href, entry)
+			else:
+				entry_name = entry.href.split("/")[-1]
+				entry.path = entry_name
+				if os.path.exists(entry.path()):
+					entry.done = True
+					entry.downloaded = entry.size = os.path.getsize(entry.path())
+					return
+				self.downloaders.append(httpdownloader.HttpDownloader(entry.hook_for_urlretrieve, entry.path()))
+				self.downloaders[-1].download(entry.href)
+
+	def play_sound(self, entry):
+		pass
 
 	def new_feed(self):
 		### ask for feed url
@@ -189,8 +214,3 @@ class PodPyCurses(object):
 			down_string += " / " + sizeof_fmt(encs[index].size)
 			self.pod_list.addnstr(3*i + 1, 27, down_string, width - 30)
 		self.pod_list.refresh()
-
-
-if __name__ == '__main__':
-	controller = PodPyCurses()
-	curses.wrapper(controller.start_curses)

@@ -54,6 +54,9 @@ class TorrentDownloader(object):
 
 	def update_info(self):
 		for entry, handle in self.handles.iteritems():
+			i = handle.get_torrent_info()
+			if i.num_files() > 0:
+				entry.file_name = i.file_at(0).path
 			s = handle.status()
 			downloaded = s.total_wanted_done
 			size = s.total_wanted

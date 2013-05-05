@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+from version import get_git_version
 
 setup(name="podpy",
-      version="0.1.1",
+      version=get_git_version(),
       description="""podpy is a simple small-footprint podcatcher planned to
  be expanded to be a full-fledged podcast client""",
       author="Patrick Schmidt",

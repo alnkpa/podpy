@@ -127,7 +127,7 @@ class PodPyCurses(object):
 				self.torrent_downloader.addTorrent(dir_name, entry.href, entry)
 			else:
 				entry_name = entry.href.split("/")[-1]
-				entry.path = entry_name
+				entry.file_name = entry_name
 				if os.path.exists(entry.path()):
 					entry.done = True
 					entry.downloaded = entry.size = os.path.getsize(entry.path())

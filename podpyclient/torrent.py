@@ -1,30 +1,32 @@
 #!/usr/bin/env python
 
-# Copyright Daniel Wallin 2006. Use, modification and distribution is
-# subject to the Boost Software License, Version 1.0. (See accompanying
-# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+# Copyright Daniel Wallin 2006, Patrick Schmidt 2014. Use, modification and
+# distribution is subject to the Boost Software License, Version 1.0. (See
+# accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 import os
 import time
 import libtorrent as lt
+import settings
 
 
 class TorrentDownloader(object):
 	"""is the interface to libtorrent"""
-	def __init__(self, ports=6881, port_range=118, max_download_rate=-1, max_upload_rate=-1):
+	def __init__(self):
 		super(TorrentDownloader, self).__init__()
-		self.ports = ports
-		self.port_range = port_range
-		self.max_download_rate = max_download_rate
-		self.max_upload_rate = max_upload_rate
-		self.save_path = './'
+		prefs = settings.Settings()
+		self.ports = prefs.torrent_port_start
+		self.port_range = prefs.torrent_port_range
+		self.max_download_rate = prefs.torrent_download_rate
+		self.max_upload_rate = prefs.torrent_download_rate
+		self.save_path = prefs.savePath
 		self.handles = {}
-		settings = lt.session_settings()
+		torrent_settings = lt.session_settings()
 		self.ses = lt.session()
 		self.ses.set_download_rate_limit(int(self.max_download_rate))
 		self.ses.set_upload_rate_limit(int(self.max_upload_rate))
 		self.ses.listen_on(self.ports, self.ports + self.port_range)
-		self.ses.set_settings(settings)
+		self.ses.set_settings(torrent_settings)
 		self.ses.set_alert_mask(0xfffffff)
 
 	def addTorrent(self, save_path, path, entry):
@@ -39,7 +41,7 @@ class TorrentDownloader(object):
 		else:
 			e = lt.bdecode(open(path, 'rb').read())
 			info = lt.torrent_info(e)
-			print('Adding \'%s\'...' % info.name())
+			#print('Adding \'%s\'...' % info.name())
 
 			try:
 				atp["resume_data"] = open(os.path.join(self.save_path, info.name() + '.fastresume'), 'rb').read()

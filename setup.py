@@ -8,7 +8,7 @@ setup(name="podpy",
       description="""podpy is a simple small-footprint podcatcher planned to
  be expanded to be a full-fledged podcast client""",
       author="Patrick Schmidt",
-      author_email="patrick@alnkpa.de",
+      author_email="me@paschmidt.de",
       url="https://github.com/alnkpa/podpy",
       packages=["podpyclient"],
       install_requires=["libtorrent", "feedparser"],

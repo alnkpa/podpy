@@ -10,6 +10,7 @@ import argparse
 
 import torrent
 import httpdownloader
+import settings
 
 
 # credit to Fred Cirera
@@ -25,9 +26,11 @@ class PodPyCurses(object):
 	def __init__(self):
 		super(PodPyCurses, self).__init__()
 		self.parse_args()
-		if self.args.version:
-			print """podpy v0.1.1"""
-			return
+
+		prefs = settings.Settings()
+
+		self.save_path = prefs.savePath
+
 		self.torrent_downloader = torrent.TorrentDownloader()
 		self.feeds = []
 		self.downloaders = [self.torrent_downloader]
@@ -37,12 +40,52 @@ class PodPyCurses(object):
 		curses.wrapper(self.start_curses)
 
 	def parse_args(self):
-		parser = argparse.ArgumentParser()
 
-		parser.add_argument("--version", help="output version information",
-									action="store_true")
+		prefs = settings.Settings()
 
-		self.args = parser.parse_args()
+		parser = argparse.ArgumentParser(
+					epilog="""All options can be truncated to the shortest
+								uniquely identifiable version\n
+								Please report any bugs and feature requests to
+								https://github.com/alnkpa/podpy"""
+										 )
+
+		parser.add_argument("-v", "--version", help="output version information",
+									action="version",
+									version="%(prog)s v0.1.1"
+							)
+		parser.add_argument("--torrent-port-start",
+							help="""start of the port range
+									for torrent downloads\n(defaults to 6881)""",
+							default=6881,
+							type=int
+							)
+		parser.add_argument("--torrent-port-range",
+							help="""width of the port range
+									for torrent downloads\n(defaults to 118)""",
+							default=118,
+							type=int
+							)
+		parser.add_argument("--torrent-download-rate",
+							help="""maximum download rate for torrent downloads
+									\n(defaults to -1 = unlimited)""",
+							default=-1,
+							type=int
+							)
+		parser.add_argument("--torrent-upload-rate",
+							help="""maximum upload rate for torrent downloads
+									\n(defaults to -1 = unlimited)""",
+							default=-1,
+							type=int
+							)
+		parser.add_argument("savePath", help="""path, where downloaded files
+												should be saved to (defaults
+												to .)""",
+										nargs='?',
+										default="./"
+							)
+
+		self.args = parser.parse_args(namespace=prefs)
 
 	def start_curses(self, stdscr):
 		### start foo, no blinking cursor, string encoding
@@ -115,7 +158,8 @@ class PodPyCurses(object):
 				now = time.time()
 
 	def select_enc(self, feed, index):
-		dir_name = feed.title.lower().replace(' ', '_')
+		prefs = settings.Settings()
+		dir_name = os.path.join(prefs.savePath, feed.title.lower().replace(' ', '_'))
 		if not os.path.isdir(dir_name):
 			os.mkdir(dir_name)
 		entry = feed.encs[index]

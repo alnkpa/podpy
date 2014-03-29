@@ -17,6 +17,7 @@ class FeedEntry(object):
 		self.dir = ""
 		self.file_name = ""
 		self.seek = 0
+		self.duration = 0
 
 	def hook_for_urlretrieve(self, block_count, block_size, file_size, done=-1):
 		self.size = file_size

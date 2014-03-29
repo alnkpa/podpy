@@ -7,14 +7,14 @@
 import os
 import time
 import libtorrent as lt
-import settings
+import podpyclient.settings
 
 
 class TorrentDownloader(object):
 	"""is the interface to libtorrent"""
 	def __init__(self):
 		super(TorrentDownloader, self).__init__()
-		prefs = settings.Settings()
+		prefs = podpyclient.settings.Settings()
 		self.ports = prefs.torrent_port_start
 		self.port_range = prefs.torrent_port_range
 		self.max_download_rate = prefs.torrent_download_rate
@@ -44,7 +44,9 @@ class TorrentDownloader(object):
 			#print('Adding \'%s\'...' % info.name())
 
 			try:
-				atp["resume_data"] = open(os.path.join(self.save_path, info.name() + '.fastresume'), 'rb').read()
+				atp["resume_data"] = open(os.path.join(self.save_path,
+				                          				info.name() + '.fastresume'),
+										  'rb').read()
 			except:
 				pass
 
@@ -86,7 +88,9 @@ class TorrentDownloader(object):
 			if not h.is_valid() or not h.has_metadata():
 				continue
 			data = lt.bencode(h.write_resume_data())
-			open(os.path.join(self.save_path, h.get_torrent_info().name() + '.fastresume'), 'wb').write(data)
+			open(os.path.join(self.save_path,
+			     			  h.get_torrent_info().name() + '.fastresume'),
+				 'wb').write(data)
 
 	def set_save_path(self, path):
 		self.save_path = path

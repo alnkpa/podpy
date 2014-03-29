@@ -3,22 +3,22 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import urllib
 import thread
+import functools
 
+def download(entry, save_path, hook):
+	try:
+		thread.start_new_thread(urllib.urlretrieve,
+		                        (entry.href,
+		                         save_path,
+		                         functools.partial(hook, entry)))
+	except urllib.ContentTooShortError as e:
+		raise e
 
 class HttpDownloader(object):
-	"""is the interface for htpp errors"""
-	def __init__(self, hook, save_path="./"):
+	"""is the interface for http downloads"""
+	def __init__(self, hook):
 		super(HttpDownloader, self).__init__()
-		self.save_path = save_path
-		self.download_progress = -1
-		self.file_size = -1
-		self.hook = hook
 
-	def download(self, path):
-		try:
-			thread.start_new_thread(urllib.urlretrieve, (path, self.save_path, self.hook))
-		except urllib.ContentTooShortError as e:
-			raise e
 
 	def main_loop(self):
 		pass
